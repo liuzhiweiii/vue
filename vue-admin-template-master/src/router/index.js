@@ -66,7 +66,7 @@ export const constantRoutes = [
         path: 'table',
         name: 'Table',
         component: () => import('@/views/sysuser/index'),
-        meta: { title: 'Table', icon: 'table' }
+        meta: { title: '用户列表', icon: 'table' }
       },
       {
         path: 'tree',
