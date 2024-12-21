@@ -36,15 +36,15 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    proxy: {//增加这一段代码
+    proxy: { // 增加这一段代码
       [process.env.VUE_APP_BASE_API]: {
-        target: "http://localhost:8080",    // 请求的第三方接口地址
-        changeOrigin: true,                // 请求跨域时，需配置此项
-        pathRewrite: {                     // 路径重写,替换target中的请求地址
-          ["^"+process.env.VUE_APP_BASE_API]: "",//env.development中修改VUE_APP_BASE_API = 'http://localhost'
-        },
+        target: 'http://localhost:8080', // 请求的第三方接口地址
+        changeOrigin: true, // 请求跨域时，需配置此项
+        pathRewrite: { // 路径重写,替换target中的请求地址
+          ['^' + process.env.VUE_APP_BASE_API]: ''// env.development中修改VUE_APP_BASE_API = 'http://localhost'
+        }
       }
-      },
+    },
     before: require('./mock/mock-server.js')
   },
   configureWebpack: {
