@@ -1,8 +1,8 @@
 import request from '@/utils/request'
 export default {
-  getUserList() {
+  getMerchantList() {
     return request({
-      url: '/getUsers',
+      url: '/getMerchants',
       method: 'get'
     })
   }
