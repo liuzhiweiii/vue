@@ -5,7 +5,7 @@
     <input type="text" placeholder="商品货号" v - model="productCode">
     <select v - model="productCategory">
       <option value="">请选择</option>
-      <!-- 这里可以动态添加商品分类选项 -->
+      <!-- 这里可以动态添加商品分类选项yrl -->
     </select>
     <select v - model="productBrand">
       <option value="">请选择品牌</option>
