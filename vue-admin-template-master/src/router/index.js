@@ -60,12 +60,12 @@ export const constantRoutes = [
     component: Layout,
     redirect: '/example/table',
     name: 'Example',
-    meta: { title: '用户管理', icon: 'el-icon-s-help' },
+    meta: { title: '商品管理', icon: 'el-icon-s-help' },
     children: [
       {
         path: 'table',
         name: 'Table',
-        component: () => import('@/views/sysuser/index'),
+        component: () => import('@/views/sysgoods/index'),
         meta: { title: 'Table', icon: 'table' }
       },
       {
