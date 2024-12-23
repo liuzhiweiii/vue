@@ -14,12 +14,12 @@
         <!-- 输入搜索 -->
         <div class="input-group">
           <label for="product-name">商品名称:</label>
-          <input id="product-name" v-model="goodsname" placeholder="商品名称" />
+          <input id="product-name" v-model="goodsname" placeholder="商品名称">
         </div>
         <!-- 商品货号 -->
         <div class="input-group">
           <label for="product-code">商品货号:</label>
-          <input id="product-code" v-model="goodsid" placeholder="商品货号" />
+          <input id="product-code" v-model="goodsid" placeholder="商品货号">
         </div>
         <!-- 商品分类 -->
         <div class="input-group">
@@ -61,7 +61,7 @@
     <div class="add-goods-box">
       <header class="add-goods-header">
         <h2>数据列表</h2>
-        <button type="button" @click="navigateToAddPage">添加</button>
+        <button type="button" @click="handleAdd">添加</button>
       </header>
     </div>
     <!-- 商品列表 -->
@@ -71,6 +71,7 @@
           <thead>
           <tr>
             <th>编号</th>
+            <th>商品图片</th>
             <th>商品名称</th>
             <th>价格</th>
             <th>标签</th>
@@ -81,6 +82,7 @@
           <tbody>
           <tr v-for="item in currentGoodsList" :key="item.goodsid">
             <td>{{ item.goodsid }}</td>
+            <td><img :src="item.goodsphoto" alt="商品图片" class="goods-list-img"></td>
             <td>{{ item.goodsname }}</td>
             <td>{{ item.price }}</td>
             <td class="status-column">
@@ -93,7 +95,7 @@
                     :active-value="true"
                     :inactive-value="false"
                     @change="updateTag(item, 'isOnShelf')"
-                  ></el-switch>
+                  />
                 </div>
                 <!-- 新品 -->
                 <div class="switch-item">
@@ -103,7 +105,7 @@
                     :active-value="true"
                     :inactive-value="false"
                     @change="updateTag(item, 'isNew')"
-                  ></el-switch>
+                  />
                 </div>
                 <!-- 推荐 -->
                 <div class="switch-item">
@@ -113,7 +115,7 @@
                     :active-value="true"
                     :inactive-value="false"
                     @change="updateTag(item, 'isRecommended')"
-                  ></el-switch>
+                  />
                 </div>
               </div>
             </td>
@@ -129,25 +131,25 @@
         <div class="pagination-container">
           <span>共 {{ totalItems }} 条</span>
           <el-select v-model="pageSize" @change="handlePageSizeChange">
-            <el-option label="5条/页" value="5"></el-option>
-            <el-option label="10条/页" value="10"></el-option>
-            <el-option label="20条/页" value="20"></el-option>
+            <el-option label="5条/页" value="5" />
+            <el-option label="10条/页" value="10" />
+            <el-option label="20条/页" value="20" />
           </el-select>
           <el-pagination
             background
             layout="prev, pager, next"
             :total="totalItems"
             :current-page.sync="currentPage"
-            @current-change="handlePageChange"
             :page-size="parseInt(pageSize)"
-          ></el-pagination>
+            @current-change="handlePageChange"
+          />
           <el-input
             v-model="jumpPage"
             placeholder="前往"
             style="width: 60px; margin-left: 10px;"
           >
             <template #append>
-              <el-button icon="el-icon-arrow-right" @click="jumpToPage"></el-button>
+              <el-button icon="el-icon-arrow-right" @click="jumpToPage" />
             </template>
           </el-input>
         </div>
@@ -164,6 +166,7 @@ export default {
     return {
       goodsname: '',
       goodsid: '',
+      goodsphoto: '',
       state: '', // 商品状态 (true: 已审核, false: 未审核)
       productCategory: '',
       productBrand: '',
@@ -182,10 +185,14 @@ export default {
     this.searchResults() // 组件创建后立即获取商品列表
   },
   methods: {
+    handleAdd() {
+      this.$router.push({ name: 'Tree' })
+    },
     resetFilters() {
       this.goodsname = ''
       this.goodsid = ''
       this.state = ''
+      this.goodsphoto = ''
     },
     searchResults() {
       // 构建查询参数
@@ -220,6 +227,8 @@ export default {
             good.isNew = good.is_new === undefined ? true : good.isNew
             good.isRecommended = good.is_recommended === undefined ? true : good.isRecommended
             good.isOnShelf = good.is_on_shelf === undefined ? true : good.isOnShelf
+            // 确保商品图片数据存在
+            good.goodsphoto = good.goodsphoto || ''
           })
 
           this.goodsList = filteredGoods
@@ -302,11 +311,6 @@ export default {
         // 如果更新失败，恢复原始状态
         this.$set(item, tag, !item[tag])
       })
-    },
-    navigateToAddPage() {
-      // 执行添加操作并跳转到添加页面
-      // 这里假设你使用的是Vue Router进行路由管理
-      this.$router.push({ name: 'AddGoods' }) // 假设添加页面的路由名为'AddGoods'
     }
   }
 }
@@ -647,5 +651,11 @@ export default {
 
 .add-goods-header button:hover {
   background-color: #0056b3;
+}
+/* 商品列表中图片的样式，设置图片大小 */
+.goods-list-img {
+  max-width: 80px; /* 设置图片最大宽度，可根据需求调整数值，比如改为 50px 等 */
+  max-height: 80px; /* 设置图片最大高度，同样可按需调整 */
+  object-fit: contain; /* 保持图片宽高比进行缩放，使其完整显示在设定尺寸内 */
 }
 </style>
