@@ -57,6 +57,13 @@
         </div>
       </form>
     </div>
+    <!-- 数据添加框 -->
+    <div class="add-goods-box">
+      <header class="add-goods-header">
+        <h2>数据列表</h2>
+        <button type="button" @click="navigateToAddPage">添加</button>
+      </header>
+    </div>
     <!-- 商品列表 -->
     <div class="goods-container">
       <div class="goods-list">
@@ -72,15 +79,48 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="goods in currentGoodsList" :key="goods.goodsid">
-            <td>{{ goods.goodsid }}</td>
-            <td>{{ goods.goodsname }}</td>
-            <td>{{ goods.price }}</td>
-            <td>{{ goods.label || '无' }}</td>
-            <td>{{ goods.state ? '已审核' : '未审核' }}</td>
+          <tr v-for="item in currentGoodsList" :key="item.goodsid">
+            <td>{{ item.goodsid }}</td>
+            <td>{{ item.goodsname }}</td>
+            <td>{{ item.price }}</td>
+            <td class="status-column">
+              <div class="tag-switches">
+                <!-- 上架 -->
+                <div class="switch-item">
+                  <span class="custom-label on-shelf">上架</span>
+                  <el-switch
+                    v-model="item.isOnShelf"
+                    :active-value="true"
+                    :inactive-value="false"
+                    @change="updateTag(item, 'isOnShelf')"
+                  ></el-switch>
+                </div>
+                <!-- 新品 -->
+                <div class="switch-item">
+                  <span class="custom-label">新品</span>
+                  <el-switch
+                    v-model="item.isNew"
+                    :active-value="true"
+                    :inactive-value="false"
+                    @change="updateTag(item, 'isNew')"
+                  ></el-switch>
+                </div>
+                <!-- 推荐 -->
+                <div class="switch-item">
+                  <span class="custom-label">推荐</span>
+                  <el-switch
+                    v-model="item.isRecommended"
+                    :active-value="true"
+                    :inactive-value="false"
+                    @change="updateTag(item, 'isRecommended')"
+                  ></el-switch>
+                </div>
+              </div>
+            </td>
+            <td>{{ item.state ? '已审核' : '未审核' }}</td>
             <td>
-              <button @click="editGoods(goods.goodsid)">编辑</button>
-              <button @click="deleteGoods(goods.goodsid)">删除</button>
+              <button @click="editGoods(item.goodsid)">编辑</button>
+              <button @click="deleteGoods(item.goodsid)">删除</button>
             </td>
           </tr>
           </tbody>
@@ -134,7 +174,8 @@ export default {
       totalItems: 0, // 总条目数
       goodsList: [], // 所有商品的数据
       currentGoodsList: [], // 当前页面的商品数据
-      jumpPage: '' // 前往页码
+      jumpPage: '', // 前往页码
+      isLoading: true
     }
   },
   created() {
@@ -147,8 +188,7 @@ export default {
       this.state = ''
     },
     searchResults() {
-      console.log('查询结果', this.goodsid, this.goodsname, this.onShelfStatus, this.auditStatus)
-
+      // 构建查询参数
       const queryParams = {
         goodsid: this.goodsid ? parseInt(this.goodsid, 10) : undefined,
         goodsname: this.goodsname || undefined,
@@ -156,21 +196,35 @@ export default {
         productBrand: this.productBrand || undefined,
         onShelfStatus: this.onShelfStatus === '' ? undefined : this.onShelfStatus,
         auditStatus: this.auditStatus === '' ? undefined : this.auditStatus,
-        currentPage: 1, // 搜索结果应从第一页开始
+        currentPage: 1,
         pageSize: this.pageSize
       }
 
       // 清除旧的状态
       this.currentGoodsList = []
 
-      console.log('发送的查询参数:', queryParams) // 打印出发送的查询参数
-
+      // 发送查询请求
       goodsApi.getGoodsList(queryParams).then(response => {
         if (response.success && response.data) {
-          console.log('接收到的数据:', response.data) // 打印出接收到的数据
-          this.goodsList = response.data.goods || []
+          // 根据查询条件过滤数据
+          let filteredGoods = response.data.goods
+          if (queryParams.goodsid) {
+            filteredGoods = filteredGoods.filter(good => good.goodsid === queryParams.goodsid)
+          }
+          if (queryParams.goodsname) {
+            filteredGoods = filteredGoods.filter(good => good.goodsname.includes(queryParams.goodsname))
+          }
+          // 此处可继续添加对其他查询条件的过滤逻辑
+          // 确保商品数据中的标签属性存在且有默认值
+          filteredGoods.forEach(good => {
+            good.isNew = good.is_new === undefined ? true : good.isNew
+            good.isRecommended = good.is_recommended === undefined ? true : good.isRecommended
+            good.isOnShelf = good.is_on_shelf === undefined ? true : good.isOnShelf
+          })
+
+          this.goodsList = filteredGoods
           this.totalItems = response.data.total || this.goodsList.length
-          this.handlePageChange(1) // 确保从第一页开始显示新的搜索结果
+          this.handlePageChange(1)
         } else {
           console.error('无效的响应数据')
         }
@@ -219,10 +273,45 @@ export default {
           alert('删除失败，请检查网络连接或稍后再试')
         })
       }
+    },
+    updateTag(item, tag) {
+      // 更新商品标签状态的逻辑
+      const payload = { [tag]: item[tag] }
+
+      console.log('Updating tag:', item.goodsid, payload) // 打印请求参数
+
+      if (!item || !item.goodsid) {
+        console.error('商品ID不存在')
+        return
+      }
+      const url = `/goods/${item.goodsid}/status` // 显式构造请求URL
+      console.log('Request URL:', url) // 打印请求URL
+
+      // 调用 API 更新商品状态
+      goodsApi.updateGoodsStatus(item.goodsid, payload).then(response => {
+        if (response.success) {
+          console.log('更新成功', response)
+        } else {
+          alert('更新失败，请稍后再试')
+          // 如果更新失败，恢复原始状态
+          this.$set(item, tag, !item[tag])
+        }
+      }).catch(error => {
+        console.error('更新商品标签失败:', error)
+        alert('更新失败，请检查网络连接或稍后再试')
+        // 如果更新失败，恢复原始状态
+        this.$set(item, tag, !item[tag])
+      })
+    },
+    navigateToAddPage() {
+      // 执行添加操作并跳转到添加页面
+      // 这里假设你使用的是Vue Router进行路由管理
+      this.$router.push({ name: 'AddGoods' }) // 假设添加页面的路由名为'AddGoods'
     }
   }
 }
 </script>
+
 <style scoped>
 .container {
   display: flex;
@@ -467,5 +556,96 @@ export default {
 
 .upload-button .el-select {
   margin-right: 10px;
+}
+/* 确保每个开关与文本在单独的一行内 */
+.tag-switches {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 内容居中对齐 */
+  gap: 8px; /* 设置每个开关之间的间距 */
+}
+
+/* 每个开关项 */
+.switch-item {
+  display: flex;
+  justify-content: center; /* 文本与开关之间保持一定距离 */
+  width: 100%; /* 占据整个容器宽度 */
+  align-items: center; /* 垂直居中 */
+}
+
+/* 自定义添加的文字标签 */
+.custom-label {
+  margin-right: 15px; /* 与开关之间保持一定的距离 */
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* 开关轨道的颜色 */
+.switch-item .el-switch__core {
+  height: 24px; /* 调整轨道高度 */
+  border-radius: 16px; /* 圆角 */
+}
+
+/* 开关按钮背景颜色 */
+.switch-item .el-switch.is-checked .el-switch__core {
+  border-color: #13ce66; /* 开启状态下的边框颜色 */
+  background-color: #13ce66; /* 开启状态下的背景颜色 */
+}
+
+/* 开关按钮圆点 */
+.switch-item .el-switch__core::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 20px;
+  width: 20px;
+  background-color: white;
+  transition: all .3s;
+  border-radius: 50%;
+}
+
+/* 当开关被点击时，按钮移动到另一端 */
+.switch-item .el-switch.is-checked .el-switch__core::after {
+  left: calc(100% - 22px);
+}
+
+/* 设置标签列的宽度 */
+.status-column {
+  width: 50px; /* 可以根据需要调整这个值 */
+}
+
+.add-goods-box {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 20px auto; /* 上下间距20px，左右自动居中 */
+  width: 100%; /* 占据父容器80%的宽度 */
+  max-width: 100%; /* 确保在小屏幕上不会溢出 */
+}
+
+.add-goods-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-goods-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.add-goods-header button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.add-goods-header button:hover {
+  background-color: #0056b3;
 }
 </style>
