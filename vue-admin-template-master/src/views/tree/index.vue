@@ -1,22 +1,9 @@
+<!--<script src="../../api/sys/Addgoods.js"></script>-->
 <template>
   <div class="add">
     <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
-      <el-form-item label="商品ID" prop="goodsid">
-        <el-input v-model.number="ruleForm.goodsid"></el-input>
-      </el-form-item>
       <el-form-item label="商品名称" prop="goodsname">
         <el-input v-model="ruleForm.goodsname"></el-input>
-      </el-form-item>
-      <el-form-item label="商品图片" prop="image">
-        <el-upload
-          class="upload-demo"
-          action=""
-          :on-success="handleSuccess"
-          :before-upload="beforeUpload"
-          :show-file-list="false"
-        >
-          <el-button size="small" type="primary">点击上传</el-button>
-        </el-upload>
       </el-form-item>
       <el-form-item label="价格" prop="price">
         <el-input v-model.number="ruleForm.price"></el-input>
@@ -36,21 +23,17 @@
 </template>
 
 <script>
+  import goods from '@/api/sys/Addgoods'; // 引入包含 addGoods 函数的模块
   export default {
     data() {
       return {
         ruleForm: {
-          goodsid: '',
           goodsname: '',
-          price: '',
+          price: null,
           label: '',
-          state: false,
-          image: ''
+          state: false, // 默认不勾选
         },
         rules: {
-          goodsid: [
-            { required: true, message: '请输入商品ID', trigger: 'blur' }
-          ],
           goodsname: [
             { required: true, message: '请输入商品名称', trigger: 'blur' }
           ],
@@ -62,18 +45,35 @@
           ],
           state: [
             { required: true, message: '请选择状态', trigger: 'change' }
-          ],
-          image: [
-            { required: true, message: '请上传商品图片', trigger: 'blur' }
           ]
         }
       };
     },
     methods: {
-      submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
+      async submitForm(formName) {
+        this.$refs[formName].validate(async (valid) => {
           if (valid) {
-            alert('submit!');
+            let formData = {
+              ...this.ruleForm,
+              state: this.ruleForm.state ? 1 : 0 // 将布尔值转换为整数
+            };
+
+            console.log("获取的数据", formData);
+
+            try {
+              const response = await goods.addGoods(formData); // 使用 goods 模块中的 addGoods 函数
+              console.log("响应数据:", response); // 打印响应数据
+              alert('商品添加成功');
+            } catch (error) {
+              console.error('提交失败:', error);
+              if (error.response) {
+                console.error('服务器响应错误:', error.response.data);
+              } else if (error.request) {
+                console.error('请求发送失败:', error.request);
+              } else {
+                console.error('其他错误:', error.message);
+              }
+            }
           } else {
             console.log('error submit!!');
             return false;
@@ -82,29 +82,13 @@
       },
       resetForm(formName) {
         this.$refs[formName].resetFields();
-      },
-      handleSuccess(response, file, fileList) {
-        // Handle the success callback from the upload
-        this.ruleForm.image = response.url; // Assuming the server returns the URL of the uploaded file
-      },
-      beforeUpload(file) {
-        const isJPG = file.type === 'image/jpeg';
-        const isLt2M = file.size / 1024 / 1024 < 2;
-
-        if (!isJPG) {
-          this.$message.error('上传头像图片只能是 JPG 格式!');
-        }
-        if (!isLt2M) {
-          this.$message.error('上传头像图片大小不能超过 2MB!');
-        }
-        return isJPG && isLt2M;
       }
     }
   }
 </script>
 
-<style scoped>
 
+<style scoped>
   .demo-ruleForm {
     width: 100%;
     max-width: 400px;
@@ -126,4 +110,3 @@
     margin-bottom: 35px;
   }
 </style>
-
