@@ -1,52 +1,28 @@
 <template>
   <div class="add-brand">
     <div class="add-inner">
-      <el-form ref="form" :model="form" label-width="150px">
-        <el-form-item label="商户id：">
-          <el-input v-model="form.id"></el-input>
+      <el-form ref="form" :model="form" :rules="addMerchantRules" label-width="150px">
+        <el-form-item label="商户id：" prop="merchantId">
+          <el-input v-model="form.merchantId"></el-input>
         </el-form-item>
-        <el-form-item label="商户名称：">
-          <el-input v-model="form.name"></el-input>
+        <el-form-item label="商户名称：" prop="merchantName">
+          <el-input v-model="form.merchantName"></el-input>
         </el-form-item>
         <el-form-item label="商户首字母：">
-          <el-input v-model="form.intital"></el-input>
-        </el-form-item>
-        <el-form-item label="商户LOGO：">
-          <el-upload class="upload-demo" action="https://jsonplaceholder.typicode.com/posts/"
-                     :on-preview="handlePreview" :on-remove="handleRemove" :file-list="fileList" list-type="picture">
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过10MB</div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="商户专区大图：">
-          <el-upload class="upload-demo" action="https://jsonplaceholder.typicode.com/posts/"
-                     :on-preview="handlePreview" :on-remove="handleRemove" :file-list="fileList" list-type="picture">
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过10MB</div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="商户故事：">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea">
-          </el-input>
+          <el-input v-model="form.merchantIntital"></el-input>
         </el-form-item>
         <el-form-item label="排序：">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.merchantRanking"></el-input>
         </el-form-item>
         <el-form-item label="是否显示：">
-          <el-radio-group v-model="form.resource1">
-            <el-radio label="是"></el-radio>
-            <el-radio label="否"></el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="商家制造商：">
-          <el-radio-group v-model="form.resource2">
-            <el-radio label="是"></el-radio>
-            <el-radio label="否"></el-radio>
+          <el-radio-group v-model="form.merchantShow">
+            <el-radio label="1">是</el-radio>
+            <el-radio label="0">否</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSubmit">提交</el-button>
-          <el-button>重置</el-button>
+          <el-button type="primary" @click="submitUpdateMerchatForm">更新商户</el-button>
+          <el-button @click="handleMechant">取消</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -54,33 +30,88 @@
 </template>
 
 <script>
+import merchant from '@/api/sys/merchant';
 export default {
   data() {
     return {
       form: {
-        name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource1: '是',
-        resource2: '否',
-        desc: '',
-        fileList: [{ name: 'food.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' }, { name: 'food2.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100' }],
-        textarea: ''
+        merchantId: '',
+        merchantName: '',
+        merchantIntital: '',
+        merchantCorrelation: '',
+        merchantRanking: '',
+        merchantShow: 0, // 默认显示
+        // merchantLogo: '', // 上传的logo
+        // merchantPicture: '' // 上传的专区大图
+      },
+      addMerchantRules: {
+        merchantId: [
+          { required: true, message: '请输入商户ID', trigger: 'blur' }
+        ],
+        merchantName: [
+          { required: true, message: '请输入商户名称', trigger: 'blur' }
+        ]
       }
     }
   },
+  created() {
+    const merchantId = this.$route.query.id; // 获取商户ID
+    console.log(merchantId)
+    if (merchantId) {
+      this.getMerchantDetails(merchantId);
+    }
+  },
   methods: {
-    onSubmit() {
-      console.log('submit!');
+    async getMerchantDetails(merchantId) {
+      try {
+        const res = await merchant.getMerchantById(merchantId);
+        const data = res.data;
+        console.log(data)
+        // 逐个字段填充表单数据
+        this.form.merchantId = data.merchants.merchantId;
+        this.form.merchantName = data.merchants.merchantName;
+        this.form.merchantIntital = data.merchants.merchantIntital;
+        this.form.merchantRanking = data.merchants.merchantRanking;
+        this.form.merchantShow = data.merchants.merchantShow === 0 ? '0' : '1';
+      } catch (error) {
+        console.error('获取商户详情失败:', error);
+      }
     },
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
+    submitUpdateMerchatForm() {
+      this.$refs.form.validate((valid) => {
+        this.form.merchantShow = this.form.merchantShow === true ? 1 : 0;
+
+        if (valid) {
+          const updatedMerchant = {
+            merchantId: this.form.merchantId,
+            merchantName: this.form.merchantName,
+            merchantIntital: this.form.merchantIntital,
+            merchantCorrelation: this.form.merchantCorrelation,
+            merchantRanking: this.form.merchantRanking,
+            merchantShow: this.form.merchantShow,
+          };
+
+          console.log("Request data:", updatedMerchant);
+          merchant.updateMerchant(updatedMerchant)
+            .then((res) => {
+              if (res.success) {
+                this.$message({ message: "商户更新成功", type: "success" });
+                this.handleMechant(); // 处理返回商户列表
+              } else {
+                this.$message.error(res.message || "商户更新失败");
+              }
+            })
+            .catch((error) => {
+              console.error("更新商户时发生错误:", error);
+              this.$message.error("更新商户时发生错误，请检查网络连接或稍后再试。");
+            });
+        } else {
+          this.$message.error("表单验证未通过，请检查输入的数据。");
+        }
+      });
     },
-    handlePreview(file) {
-      console.log(file);
+    handleMechant() {
+      this.$router.push({ path: '/merchant/index' });
     }
   }
 }

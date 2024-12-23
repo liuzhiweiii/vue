@@ -94,11 +94,10 @@
 </template>
 
 <script>
-// 加入merchant.js的前面一行 api/sys/user
 import user from '@/api/sys/merchant'
-import axios from 'axios'; // 确保在文件顶部导入 axios
+import axios from 'axios';
 import * as MerchantApi from '@/api/sys/merchant';
-console.log(MerchantApi); // 查看此模块的所有导出
+console.log(MerchantApi);
 
 export default {
   data() {
@@ -167,11 +166,6 @@ export default {
   created() {
     this.getMerchantList();
   },
-  handleDeleteClick(merchantId) {
-    const url = `/deleteMerchant/${merchantId}`;
-    console.log("Deleting user with URL:", url); // 打印 URL 以供调试
-    return axios.delete(url);
-  },
   computed: {
     pagedTableData() {
       console.log(this.pageSize);
@@ -215,7 +209,7 @@ export default {
       this.$router.push('/addMerchant');
     },
     handleEditClick(row) {
-      this.$router.push('/editMerchant');
+      this.$router.push({ path: '/editMerchant', query: { id: row.merchantId } });
     },
     // 删除操作
     deleteMerchant(row) {
