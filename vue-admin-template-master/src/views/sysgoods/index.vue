@@ -121,7 +121,7 @@
             </td>
             <td>{{ item.state ? '已审核' : '未审核' }}</td>
             <td>
-              <button @click="editGoods(item.goodsid)">编辑</button>
+              <button @click="editGoods()">编辑</button>
               <button @click="deleteGoods(item.goodsid)">删除</button>
             </td>
           </tr>
@@ -161,6 +161,9 @@
 <script>
 import request from '@/utils/request'
 import goodsApi from '@/api/sys/goods'
+import Vue from 'vue'
+import Router from 'vue-router'
+Vue.use(Router)
 export default {
   data() {
     return {
@@ -262,20 +265,35 @@ export default {
         alert('请输入有效的页码')
       }
     },
-    editGoods(goodsId) {
+    editGoods() {
       // 编辑商品的逻辑
+      this.$router.push({
+        name: 'UpdateGoodstest'
+      })
     },
-    deleteGoods(goodsId) {
+    // editGoods(goodsId) {
+    //   // 使用Vue Router进行路由跳转，将商品编号作为参数传递
+    //   // this.$router.push({
+    //   //   path: '/edit-goods/:goodsid',
+    //   //   query: {
+    //   //     goodsId: goodsId
+    //   //   }
+    //   // })
+    //   console.log(goodsId)
+    // },
+    deleteGoods(goodsid) {
       if (confirm('确定要删除该商品吗？')) {
         request({
-          url: `/goods/${goodsId}`,
+          url: `/goods/${goodsid}`,
           method: 'delete'
         }).then(response => {
           if (response.success) {
             alert('删除成功')
             this.searchResults() // 删除成功后重新加载商品列表
           } else {
-            alert('删除失败，请稍后再试')
+            // 假设后端返回的错误信息在 response.data.errorMessage 中，可根据实际调整
+            const errorMessage = response.data && response.data.errorMessage ? response.data.errorMessage : '删除失败，请稍后再试'
+            alert(errorMessage)
           }
         }).catch(error => {
           console.error('删除商品失败:', error)

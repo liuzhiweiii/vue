@@ -39,42 +39,5 @@ export default {
       url: `/goods/${goodsid}`,
       method: 'delete'
     })
-  },
-
-  /**
-   * 更新指定 ID 商品的状态
-   * @param {number} goodsid - 商品 ID
-   * @param {Object} data - 状态更新的数据对象
-   * @param {boolean} [data.isOnShelf] - 上架状态
-   * @param {boolean} [data.isNew] - 新品状态
-   * @param {boolean} [data.isRecommended] - 推荐状态
-   * @returns {Promise} 返回一个 Promise 对象，表示更新操作的结果
-   */
-  // updateGoodsStatus(goodsid, data) {
-  //   const convertedData = {}
-  //   for (const key in data) {
-  //     // eslint-disable-next-line no-prototype-builtins
-  //     if (data.hasOwnProperty(key)) {
-  //       convertedData[key] = data[key] ? 'true' : 'false'
-  //     }
-  //   }
-  //   return request({
-  //     url: `/updateGoods/${goodsid}/status`,
-  //     method: 'put',
-  //     data: convertedData
-  //   })
-  // },
-  /**
-   * 更新指定 ID 商品的状态
-   * @param {number} goodsId - 商品 ID
-   * @param {Object} data - 状态更新的数据对象
-   * @returns {Promise} 返回一个 Promise 对象，表示更新操作的结果
-   */
-  updateGoodsStatus(goodsId, data) {
-    return request({
-      url: `/goods/${goodsId}/status`, // 注意这里的路径
-      method: 'put',
-      data: data // 使用 data 字段发送 JSON 请求体
-    })
   }
 }

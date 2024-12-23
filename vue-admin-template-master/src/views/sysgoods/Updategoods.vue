@@ -1,47 +1,47 @@
 <template>
-  <div class="add">
-    <el-form ref="ruleForm" :model="ruleForm" status-icon :rules="rules" label-width="100px" class="demo-ruleForm">
+  <div class="edit">
+    <el-form ref="editForm" :model="editForm" status-icon :rules="editRules" label-width="100px" class="demo-editForm">
       <el-form-item label="商品名称" prop="goodsname">
-        <el-input v-model="ruleForm.goodsname" />
+        <el-input v-model="editForm.goodsname" />
       </el-form-item>
       <el-form-item label="商品图片" prop="goodsphoto">
-        <el-input v-model="ruleForm.goodsphoto" />
+        <el-input v-model="editForm.goodsphoto" />
       </el-form-item>
       <el-form-item label="价格" prop="price">
-        <el-input v-model.number="ruleForm.price" />
+        <el-input v-model.number="editForm.price" />
       </el-form-item>
       <el-form-item label="标签" prop="label">
-        <el-input v-model="ruleForm.label" />
+        <el-input v-model="editForm.label" />
       </el-form-item>
       <el-form-item label="状态" prop="state">
-        <el-switch v-model="ruleForm.state" />
+        <el-switch v-model="editForm.state" />
       </el-form-item>
       <!-- 添加上架状态复选框 -->
       <el-form-item label="上架" prop="isOnShelf">
-        <el-checkbox v-model="ruleForm.isOnShelf" />
+        <el-checkbox v-model="editForm.isOnShelf" />
       </el-form-item>
       <!-- 添加新品状态复选框 -->
       <el-form-item label="新品" prop="isNew">
-        <el-checkbox v-model="ruleForm.isNew" />
+        <el-checkbox v-model="editForm.isNew" />
       </el-form-item>
       <!-- 添加推荐状态复选框 -->
       <el-form-item label="推荐" prop="isRecommended">
-        <el-checkbox v-model="ruleForm.isRecommended" />
+        <el-checkbox v-model="editForm.isRecommended" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm('ruleForm')">提交</el-button>
-        <el-button @click="resetForm('ruleForm')">重置</el-button>
+        <el-button type="primary" @click="submitEditForm('editForm')">保存</el-button>
+        <el-button @click="resetEditForm('editForm')">重置</el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script>
-import goods from '@/api/sys/Addgoods' // 引入包含 addGoods 函数的模块
+import goods from '@/api/sys/Updategoods' // 引入包含 updateGoods 函数的模块，假设你有对应的更新商品接口模块，这里按添加商品的引入方式类比修改了模块名，你可按实际情况调整
 export default {
   data() {
     return {
-      ruleForm: {
+      editForm: {
         goodsname: '',
         goodsphoto: '',
         price: null,
@@ -49,9 +49,9 @@ export default {
         state: false,
         isOnShelf: false,
         isNew: false,
-        isRecommended: false // 默认不勾选
+        isRecommended: false
       },
-      rules: {
+      editRules: {
         goodsname: [
           { required: true, message: '请输入商品名称', trigger: 'blur' }
         ],
@@ -61,13 +61,15 @@ export default {
         price: [
           { required: true, message: '请输入价格', trigger: 'blur' },
           { pattern: /^\d+(\.\d{1,2})?$/, message: '请输入正确的价格格式（最多两位小数）', trigger: 'blur' },
-          { validator: (rule, value, callback) => {
-            if (value < 0) {
-              callback(new Error('价格不能为负数'))
-            } else {
-              callback()
-            }
-          }, trigger: 'blur' }
+          {
+            validator: (rule, value, callback) => {
+              if (value < 0) {
+                callback(new Error('价格不能为负数'))
+              } else {
+                callback()
+              }
+            }, trigger: 'blur'
+          }
         ],
         label: [
           { required: true, message: '请输入标签', trigger: 'blur' },
@@ -80,15 +82,15 @@ export default {
     }
   },
   methods: {
-    submitForm(formName) {
+    submitEditForm(formName) {
       this.$refs[formName].validate(async(valid) => {
         if (valid) {
           const formData = {
-            ...this.ruleForm,
-            state: this.ruleForm.state ? 1 : 0 // 将布尔值转换为整数
+            ...this.editForm,
+            state: this.editForm.state ? 1 : 0 // 将布尔值转换为整数
           }
 
-          console.log('准备提交的数据:', formData) // 输出待提交数据
+          console.log('准备提交的更新数据:', formData)
 
           // 检查商品名称长度
           if (formData.goodsname.length > 50) {
@@ -102,58 +104,43 @@ export default {
             alert('请输入正确的价格格式（最多两位小数）')
             return
           }
-          goods.addGoods(formData).then((res) => {
-            console.log('添加成功', res.data)
+
+          try {
+            const response = await goods.updateGoods(formData)
+            console.log('更新成功', response.data)
             this.$message({
-              message: '商品添加成功',
+              message: '商品编辑成功',
               type: 'success'
             })
-          }).catch((error) => {
+            // 假设这里有触发父组件刷新列表等相关逻辑，你可按实际需求添加，比如 this.$emit('refreshList')
+            // 假设返回上一页等跳转逻辑，比如 this.$router.back()，按实际需求调整
+          } catch (error) {
+            console.error('更新失败:', error)
             if (error.response) {
               console.error('状态码:', error.response.status)
               console.error('错误信息:', error.response.data)
+            } else if (error.request) {
+              console.error('请求发送失败')
+            } else {
+              console.error('其他错误:', error.message)
             }
-          })
-
-          // 此处后面原本的 try-catch 代码块可以考虑删除，因为前面已经通过.then 和.catch 处理了响应和错误情况
-          // try {
-          //   const response = await goods.addGoods(formData)
-          //   console.log('商品名称:', formData.goodsname)
-          //   console.log('价格:', formData.price)
-          //   console.log('标签:', formData.label)
-          //   console.log('状态:', formData.state)
-          //   console.log('上架:', formData.isOnShelf)
-          //   console.log('新品:', formData.isNew)
-          //   console.log('推荐:', formData.isRecommended)
-          //   console.log('响应数据:', response)
-          //   alert('商品添加成功')
-          // } catch (error) {
-          //   console.error('提交失败:', error)
-          //   if (error.response) {
-          //     console.error('服务器响应错误:', error.response.data)
-          //   } else if (error.request) {
-          //     console.error('请求发送失败:', error.request)
-          //   } else {
-          //     console.error('其他错误:', error.message)
-          //   }
-          //   alert('提交失败，请检查控制台以获得更多错误信息')
-          // }
+            alert('编辑失败，请检查控制台以获得更多错误信息')
+          }
         } else {
           console.log('表单验证失败')
           return false
         }
       })
+    },
+    resetEditForm(formName) {
+      this.$refs[formName].resetFields()
     }
-  },
-  resetForm(formName) {
-    this.$refs[formName].resetFields()
   }
 }
-
 </script>
 
 <style scoped>
-.demo-ruleForm {
+.demo-editForm {
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
@@ -166,7 +153,7 @@ body {
   height: 100vh;
 }
 
-.add {
+.edit {
   margin-top: 100px;
 }
 
